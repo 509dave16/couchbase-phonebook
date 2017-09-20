@@ -1,47 +1,86 @@
-$(function(){ 
-  var store = new Store('example', { remote: 'http://localhost:4984/example', PouchDB: PouchDB });
-  
-	$('#contactForm').submit(function(event) {
-    event.preventDefault();
+$(function() {
+    var store = new PouchDB('example');
 
-    var name = $('#name').val();
-    var email = $('#email').val();
-    var mobile = $('#mobile').val();
+    $('#contactForm').submit(function(event) {
+        event.preventDefault();
 
-    // Save the contact to the database
-    store.add({
-      name: name,
-      mobile: mobile,
-      email: email
+        var name = $('#name').val();
+        var email = $('#email').val();
+        var mobile = $('#mobile').val();
+
+        // Save the contact to the database
+        store.post({
+            name: name,
+            mobile: mobile,
+            email: email
+        });
+
+        $('#contactForm')[0].reset();
     });
 
-    $('#contactForm')[0].reset();
-  });
+    //add new contact to the page
+    function addNewContactToList(record) {
+        console.log(record);
+        var contact = record.doc;
+        var newContact = '<tr><td>' + contact.name + '</td><td>' + contact.mobile +
+            '</td><td>' + contact.email + '</td></td><td>' +
+            '<button type="button" class="btn btn-default" data-id="' + contact._id +
+            '">Delete</button>' +
+            '</td></tr>';
+        $("#contactList tbody").append(newContact);
+    }
 
-  //add new contact to the page
-  function addNewContactToList(contact) {
-    var newContact = '<tr><td>' + contact.name + '</td><td>' + contact.mobile + '</td><td>' + contact.email + '</td></tr>'
-    $("#contactList tbody").append(newContact);
-  }
+    function deleteContact(id) {
+        store.get(id).then(function(doc) {
+            store.remove(doc).then(function(event) {
+                console.log(event);
+            }).catch(function(err) {
+                console.log(err);
+            });
+        });
+    }
 
-  //when a new entry is added to the database, run the corresponding function
-  store.on('add', addNewContactToList);
+    function loadContacts() {
+        return store.allDocs({ include_docs: true }).then(function(contacts) {
+            $("#contactList tbody").html('');
+            $.each(contacts.rows, function(i, record) {
+                addNewContactToList(record);
+            });
+        });
+    }
 
-  function loadContacts() {
-    store.findAll().then(function(contacts) {
-      var tbody = '';
-      $.each(contacts, function (i, contact) {
-        var row = '<tr><td>' + contact.name + '</td><td>' + contact.mobile + '</td><td>' + contact.email + '</td></tr>';
-        tbody += row;
-      });
-
-      $("#contactList tbody").html('').html(tbody);
+    $("#contactList").on('click', function(event) {
+        event.preventDefault();
+        var id = $(event.target).attr('data-id');
+        deleteContact(id);
     });
-  }
 
-  // when the site loads in the browser,
-  // we load all previously saved contacts from hoodie
-  loadContacts();
+    function processChange(record) {
+        if (record.doc._deleted) {
+            // re-render entire list
+            loadContacts();
+        } else {
+            addNewContactToList(record);
+        }
+    }
 
-  store.connect();
+    // when a new entry is added to the database, update the contact list.
+    store.changes({
+        since: 'now',
+        live: true,
+        include_docs: true
+    }).on('change', processChange);
+
+    // when the site loads in the browser
+    // we load all previously saved contacts from the local database.
+    var promise = loadContacts();
+
+    // Now continuously synchronize with the Sync Gateway this will trigger the store.changes() listener.
+    // Retry connection if the connection is/goes down (uses backoff strategy).
+    promise.then(function() {
+        store.sync('http://localhost:4984/example', {
+            live: true,
+            retry: true
+        });
+    });
 });
