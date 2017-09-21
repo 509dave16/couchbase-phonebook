@@ -19,8 +19,7 @@ $(function() {
     });
 
     //add new contact to the page
-    function addNewContactToList(record) {
-        console.log(record);
+    function addContact(record) {
         var contact = record.doc;
         var newContact = '<tr><td>' + contact.name + '</td><td>' + contact.mobile +
             '</td><td>' + contact.email + '</td></td><td>' +
@@ -32,11 +31,7 @@ $(function() {
 
     function deleteContact(id) {
         store.get(id).then(function(doc) {
-            store.remove(doc).then(function(event) {
-                console.log(event);
-            }).catch(function(err) {
-                console.log(err);
-            });
+            store.remove(doc).then(console.log).catch(console.log);
         });
     }
 
@@ -44,9 +39,18 @@ $(function() {
         return store.allDocs({ include_docs: true }).then(function(contacts) {
             $("#contactList tbody").html('');
             $.each(contacts.rows, function(i, record) {
-                addNewContactToList(record);
+                addContact(record);
             });
         });
+    }
+
+    function processChange(record) {
+        if (record.doc._deleted) {
+            // re-render entire list
+            loadContacts();
+        } else {
+            addContact(record);
+        }
     }
 
     $("#contactList").on('click', function(event) {
@@ -54,15 +58,6 @@ $(function() {
         var id = $(event.target).attr('data-id');
         deleteContact(id);
     });
-
-    function processChange(record) {
-        if (record.doc._deleted) {
-            // re-render entire list
-            loadContacts();
-        } else {
-            addNewContactToList(record);
-        }
-    }
 
     // when a new entry is added to the database, update the contact list.
     store.changes({
