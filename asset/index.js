@@ -59,21 +59,20 @@ $(function() {
         deleteContact(id);
     });
 
-    // when a new entry is added to the database, update the contact list.
+    // when a new entry is added to/removed from the database, update the contact list.
     store.changes({
         since: 'now',
         live: true,
         include_docs: true
     }).on('change', processChange);
 
-    // when the site loads in the browser
-    // we load all previously saved contacts from the local database.
+    // when the site loads we load all previously saved contacts from the local database.
     var promise = loadContacts();
 
     // Now continuously synchronize with the Sync Gateway this will trigger the store.changes() listener.
     // Retry connection if the connection is/goes down (uses backoff strategy).
     promise.then(function() {
-        store.sync('http://localhost:4984/example', {
+        store.sync('http://127.0.0.1:4984/example', {
             live: true,
             retry: true
         });

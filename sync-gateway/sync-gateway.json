@@ -8,8 +8,8 @@
         }
     },
     "CORS": {
-        "Origin": ["http://localhost:8801"],
-        "LoginOrigin": ["http://localhost:8801"],
+        "Origin": ["http://127.0.0.1:8801"],
+        "LoginOrigin": ["http://127.0.0.1:8801"],
         "Headers": ["Content-Type"],
         "MaxAge": 17280000
     }
