@@ -12,10 +12,11 @@ Modified by saschwarz:
 - git clone
 - cd couchbase-phonebook
 - npm install
-- Either:
+- to serve the index.html and JS files:
     - Configure [Web Server for Chrome extension](https://chrome.google.com/webstore/detail/web-server-for-chrome/ofhbbkphhbklhfoeikjpcbhemlocgigb?hl=en) to point to your directory and choose your preferred port.
     - Run: `python -m SimpleHTTPServer 8801`
-- docker run -p 4984:4984 -v `pwd`/sync-gateway:/tmp/config couchbase/sync-gateway /tmp/config/sync-gateway.json
-- Visit localhost:8801 in your browser. Open an incognito window and also visit the same URL to see both update.
+- To run the Sync Gateway: `docker run -p 4984:4984 -v `pwd`/sync-gateway:/tmp/config couchbase/sync-gateway /tmp/config/sync-gateway.json`
+- Visit http://127.0.0.1:8801 in your browser. Open an incognito window and also visit the same URL to see both update as you save or delete.
 Also start a browser after you've entered some data to see it get populated on start up. Use the browser's dev tools
-to clear the Application storage to see the data get populated from the Sync Gateway upon restart.
+to clear the Application storage to see the data get populated from the Sync Gateway upon reload.
+Stop the Sync Gateway, add/delete entries in both browsers and then restart the Sync Gateway an see the server and browsers update.
